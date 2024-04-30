@@ -38,6 +38,16 @@ router.get("/:userId/:courseId", async (req, res) => {
   }
 });
 
+router.get("/", async (req, res) => {
+  try {
+    const allCourseProgress = await Progress.find().lean();
+    res.status(200).json(allCourseProgress);
+  } catch (error) {
+    console.error("Error fetching all course progress:", error);
+    res.status(500).json({ error: "Internal server error", errMsg: error });
+  }
+});
+
 router.post("/", async (req, res) => {
   try {
     const userId = req.body.userId;

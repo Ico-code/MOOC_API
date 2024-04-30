@@ -2,6 +2,8 @@
 
 This section of the documentation will be going over the Request Body, API Response, Data Validation and Error Handling on the API side.
 
+A little mention here in the beginning, that a few of these path and their functionalities might have changed a little, since i wrote this before i was fully done testing the functionalities of this API.
+
 # Courses
 
 ## GET /courses

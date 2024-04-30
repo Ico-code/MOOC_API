@@ -3,32 +3,83 @@
 This is the api for a Course-site, designed to facilitate the delivery of educational courses to its users.
 This Project is built using Nodejs and Express, and it will later be connected to a Reactjs frontend, to make its contents easier to access, and study.
 
-Gituhb:https://github.com/Ico-code/MOOC_API
-Render: 
+Github: https://github.com/Ico-code/MOOC_API
+Render: https://mooc-api-x7xb.onrender.com/
 
-# API Functionalities:
+# API functions:
+1. Get Courses
+works! path Get /courses
 
-- Get Courses
-- Get User's Enrolled Courses
-- Get Specific Courses using _ID
-- Get User Progress
-- Get Modules
-- Get Specific Modules using _ID
-- Get User Accounts
-- Add Course Participants
-- Add Course
-- Add Modules
-- Add User Accounts
-- Update Students Course Progression
-- Update Module Content
-- Update Course
-- Update Student Progress
-- Delete Course
-- Delete User
-- Delete Module
-- Delete Course Progression
-- Archive Course
-- Delete Students Enrollment
+2. Get Courses Archived
+Works! path Get /courses/archived
+
+3. Get User's Enrolled Courses
+Works! path Get /courses/user/:username
+
+4. Get Specific Courses using _ID
+Works! path Get /courses/:courseId
+
+5. Get Specific user using username
+Works! path Get /users/:username
+
+6. Get User Progress
+Works! path Get /courseProgression/:userId/:courseId
+
+7. Get Modules
+Works! path Get /modules/:moduleId
+
+8. Get Specific Modules using _ID
+
+9. Get Users for specific course
+Works! path Get /users/course/:courseId
+
+10. Get All User Accounts
+Works! path Get /users
+
+11. Add Course Participants
+Works! path Post /courseProgression
+
+12. Add Course
+Works! path Post /courses
+
+13. Add Modules
+Works! path Post /modules
+
+14. Add User Accounts
+Works! path Post /users
+
+15. Update Students Course Progression
+Works! path Put /courseProgression/:userId/:courseId
+
+16. Update Module Content
+Works! path Put /modules/content/:moduleId
+
+17. Update Course
+Works! path Put /courses/:courseId
+
+18. Update Account Information
+Works! path Put /users/:username
+
+19. Delete Course
+Works! path Delete /courses/:courseId
+
+20. Delete User
+Works! path Delete /users/:userId
+
+21. Delete Module
+Works! path Delete /modules/:moduleId
+
+22. Delete Course Progression
+Works! path Delete /courseProgression/progress/:userId/:courseId
+
+23. Delete Students Enrollment
+Works! path Delete /courses/:courseId/participants/:username
+
+24. Archive Course
+Works! path Put /courses/:courseId/archive
+
+25. Unarchive Course
+Works! path Put /courses/:courseId/unarchive
 
 # User Requirements
 
@@ -303,70 +354,3 @@ Index on participants.username:
 
     This index will allow MongoDB to quickly find all documents where the specified username appears in the participants array, enabling efficient retrieval of courses for a specific student.
     `db.CoursesCollection.createIndex({ "participants.username": 1 });`
-
-# API Requirements and Documentation
-
-## Paths
-
-### List of paths:
-- GET /courses
-- GET /courses/:userId
-- GET /courses/:courseId
-- GET /modules/:moduleId
-- GET /courseProgression/:userId
-- GET /users/:username
-- GET /users/:courseId
-- POST /courseProgression/:userId
-- POST /courses
-- POST /modules
-- POST /users
-- PUT /courseProgression/:userId/:courseId
-- PUT /modules/:moduleId/content
-- PUT /courses/:courseId
-- PUT /users/:username
-- DELETE /courses/:courseId
-- DELETE /users/:userId
-- DELETE /modules/:moduleId
-- DELETE /courseProgression/:userId/:courseId
-- PUT /courses/:courseId/archive
-- PUT /courses/:courseId/participants/:userId
-
-### Get
-This part will cover the paths for getting data from the collections using this API.
-
-#### Data Validation
-
-#### Error Handling
-
-### Post
-This part will cover the paths for posting data from the collections using this API.
-
-#### Data Validation
-
-#### Error Handling
-
-### Update
-This part will cover the paths for updating data from the collections using this API.
-
-#### Data Validation
-
-#### Error Handling
-
-### Delete
-This part will cover the paths for deleting data from the collections using this API.
-
-#### Data Validation
-
-#### Error Handling
-
-### Other
-This part will cover the paths for other functionalities using this API.
-
-#### Authentication
-
-##### Data Validation
-
-##### Error Handling
-
-
-## Other Features

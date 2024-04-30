@@ -45,6 +45,18 @@ router.get("/:moduleId", async (req, res) => {
   }
 });
 
+router.get("/", async (req, res) => {
+  try {
+    // Fetch all modules
+    const modules = await Module.find().lean();
+
+    res.status(200).json(modules); // Respond with all modules
+  } catch (err) {
+    console.error("Error fetching modules:", err);
+    res.status(500).json({ error: "Internal server error", errMsg: err }); // Return an error response
+  }
+});
+
 router.post("/", async (req, res) => {
   try {
     const successfulModules = [];
