@@ -1,7 +1,8 @@
+const mongoose = require('mongoose');
+
 const moduleSchema = new mongoose.Schema({
-    _id: mongoose.Schema.Types.ObjectId, // Module ID
     title: { type: String, required: true }, // Title of the module
-    score: { type: Number }, // total amount of point earnable through this module
+    totalScore: { type: Number }, // total amount of point earnable through this module
     duration: { type: String }, // duration for the course modules
     order: { type: Number }, // order for the course modules
     material: [
@@ -15,3 +16,5 @@ const moduleSchema = new mongoose.Schema({
   });
 
 const Module = mongoose.model("Module", moduleSchema);
+
+module.exports = Module;

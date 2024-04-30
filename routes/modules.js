@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const Module = require("../models/module");
-const Progress = require("../models/courseprogression");
+const Module = require("../models/module.js");
+const Progress = require("../models/courseprogression.js");
+const Course = require("../models/course.js");
+
+const mongoose = require("mongoose");
 
 // Function to validate module data against the Mongoose schema
 async function validateModuleData(moduleData) {
@@ -44,55 +47,66 @@ router.get("/:moduleId", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { title, score, duration, order, material, courseId } = req.body;
-    // Validate required fields
-    if (
-      !title ||
-      !courseId ||
-      !material ||
-      !Array.isArray(material) ||
-      material.length === 0
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Title, courseId, and material array are required" });
-    }
-    // Validate material array
-    material.forEach((content, index) => {
-      if (!content.content_type || !content.content) {
+    const successfulModules = [];
+
+    const moduleData = req.body;
+    for (const item of moduleData) {
+      const { title, totalScore, duration, order, material, courseId } = item;
+      // Validate required fields
+      if (
+        !title ||
+        !courseId ||
+        !material ||
+        !Array.isArray(material) ||
+        material.length === 0
+      ) {
         return res
           .status(400)
-          .json({ error: `Invalid material content at index ${index}` });
+          .json({ error: "Title, courseId, and material array are required" });
       }
-      if (typeof content.content_type !== "string") {
-        return res.status(400).json({
-          error: `Invalid data type for material content_type at index ${index}`,
-        });
+      // Check if the course exists
+      const courseExists = await Course.exists({ _id: courseId });
+      if (!courseExists) {
+        return res.status(404).json({ error: "Course not found", successfulModules: successfulModules });
       }
-      if (content.score && typeof content.score !== "number") {
-        return res.status(400).json({
-          error: `Invalid data type for material score at index ${index}`,
-        });
+      // Validate material array
+      for (let index = 0; index < material.length; index++) {
+        const content = material[index];
+        if (!content.content_type || !content.content) {
+          return res
+            .status(400)
+            .json({ error: `Invalid material content at index ${index}`, successfulModules: successfulModules });
+        }
+        if (typeof content.content_type !== "string") {
+          return res.status(400).json({
+            error: `Invalid data type for material content_type at index ${index}`, successfulModules: successfulModules,
+          });
+        }
+        if (content.score && typeof content.score !== "number") {
+          return res.status(400).json({
+            error: `Invalid data type for material score at index ${index}`, successfulModules: successfulModules,
+          });
+        }
       }
-    });
-    // Create a new module instance
-    const newModule = new Module({
-      title,
-      score,
-      duration,
-      order,
-      material,
-      courseId,
-    });
-    // Save the new module to the database
-    const savedModule = await newModule.save();
-    res.status(201).json(savedModule);
+      // Create a new module instance
+      const newModule = new Module({
+        title,
+        totalScore,
+        duration,
+        order,
+        material,
+        courseId,
+      });
+      // Save the new module to the database
+      const savedModule = await newModule.save();
+      successfulModules.push(savedModule);
+    }
+    res.status(201).json({ success: "Modules created successfully", modules: successfulModules });
   } catch (error) {
     console.error("Error creating module:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error", successfulModules: successfulModules });
   }
 });
-
 router.put("/content/:moduleId", async (req, res) => {
   try {
     const moduleId = req.params.moduleId;
@@ -101,19 +115,19 @@ router.put("/content/:moduleId", async (req, res) => {
     if (!material || !Array.isArray(material) || material.length === 0) {
       return res
         .status(400)
-        .json({ error: "Material array is required and must not be empty" });
+        .json({ error: "Material array is required and must not be empty", successfulModules: successfulModules });
     }
     let validationError = null;
     // Validate each material item
     material.forEach((content, index) => {
       if (!content.content_type || !content.content) {
         validationError = {
-          error: `Invalid material content at index ${index}`,
+          error: `Invalid material content at index ${index}`, successfulModules: successfulModules,
         };
       }
       if (typeof content.content_type !== "string") {
         validationError = {
-          error: `Invalid data types for material content at index ${index}`,
+          error: `Invalid data types for material content at index ${index}`, successfulModules: successfulModules,
         };
       }
     });
@@ -128,17 +142,17 @@ router.put("/content/:moduleId", async (req, res) => {
     );
     if (!updatedModule) {
       console.log("Module not found.");
-      return res.status(404).json({ error: "Module not found" });
+      return res.status(404).json({ error: "Module not found", successfulModules: successfulModules });
     }
     console.log("Module contents updated:", updatedModule);
     res.status(200).json(updatedModule);
   } catch (error) {
     console.error("Error updating module contents:", error);
-    res.status(500).json({ error: "Internal server error" }); // Return an error response
+    res.status(500).json({ error: "Internal server error", successfulModules: successfulModules }); // Return an error response
   }
 });
 
-router.delete("/modules/:moduleId", async (req, res) => {
+router.delete("/:moduleId", async (req, res) => {
   const moduleId = req.params.moduleId;
 
   // Validate moduleId
@@ -160,7 +174,9 @@ router.delete("/modules/:moduleId", async (req, res) => {
       { $pull: { modulesProgress: { moduleId } } }
     );
 
-    console.log(`Deleted module from ${deletedProgress.nModified} progress documents`);
+    console.log(
+      `Deleted module from ${deletedProgress.nModified} progress documents`
+    );
 
     res.status(200).json({ message: "Module deleted" }); // Respond with success message
   } catch (error) {

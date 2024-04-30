@@ -1,5 +1,6 @@
+const mongoose = require('mongoose');
+
 const courseProgressionSchema = new mongoose.Schema({
-  _id: mongoose.Schema.Types.ObjectId, // Unique identifier for the progress document
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to the user document (foreign key)
   courseId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -27,7 +28,10 @@ const courseProgressionSchema = new mongoose.Schema({
     },
   ],
 });
+
 const CourseProgrssion = mongoose.model(
   "CourseProgrssion",
   courseProgressionSchema
 );
+
+module.exports = CourseProgrssion;

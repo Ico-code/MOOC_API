@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/user");
+const User = require("../models/user.js");
+const Course = require("../models/course.js");
+
+const mongoose = require("mongoose");
 
 //Login
 router.post("/login", (req, res) => {
@@ -31,38 +34,37 @@ router.post("/login", (req, res) => {
 });
 
 // Users
-router.get("/course/:courseId", (req, res) => {
-  // Fetch all participants for a course
-  const courseId = req.params.courseId;
-  if (!mongoose.Types.ObjectId.isValid(courseId)) {
-    return res.status(400).json({ error: "Invalid courseId" });
-  }
-  // Fetch the course document by its ID
-  Course.findById(courseId)
-    .then((course) => {
-      if (!course) {
-        return res.status(404).json({ error: "Course not found" });
-      }
-      // Extract the list of participant usernames from the course document
-      const participantUsernames = course.participants;
+router.get("/course/:courseId", async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
 
-      // Fetch the user documents for the participant usernames
-      return User.find({ username: { $in: participantUsernames } });
-    })
-    .then((users) => {
-      res.status(200).json(users);
-    })
-    .catch((error) => {
-      console.error("Error fetching users for course:", error);
-      res.status(500).json({ error: "Internal server error", errMsg: err });
-    });
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ error: "Invalid courseId" });
+    }
+
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    const participantUsernames = course.participants;
+
+    const users = await User.find({ username: { $in: participantUsernames } });
+
+    res.status(200).json(users);
+  } catch (err) {
+    console.error("Error fetching users for course:", err);
+    res.status(500).json({ error: "Internal server error", errMsg: err.message });
+  }
 });
 
 router.get("/:username", (req, res) => {
+  const username = req.params.username;
+
   if (!username || username.trim() === "") {
     return res.status(400).json({ error: "Username is required" });
   }
-  const username = req.params.username;
   // Find the user document by username
   User.findOne({ username })
     .then((user) => {
@@ -71,13 +73,26 @@ router.get("/:username", (req, res) => {
       }
       res.status(200).json(user);
     })
-    .catch((error) => {
-      console.error("Error fetching user:", error);
+    .catch((err) => {
+      console.error("Error fetching user:", err);
       res.status(500).json({ error: "Internal server error", errMsg: err });
     });
 });
 
+router.get("/", (req, res) => {
+  // Find all user documents
+  User.find()
+    .then((users) => {
+      res.status(200).json(users); // Respond with the array of users
+    })
+    .catch((error) => {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Internal server error", errMsg: error });
+    });
+});
+
 router.post("/", (req, res) => {
+  // console.log(req.body)
   let { role, email, username, password } = req.body; // Extract user data from request body
 
   // Check if email, username, and password are provided and not empty
@@ -112,8 +127,8 @@ router.post("/", (req, res) => {
       console.log("New user created:", savedUser);
       res.status(201).json(savedUser); // Respond with the created user
     })
-    .catch((error) => {
-      console.error("Error creating user:", error);
+    .catch((err) => {
+      console.error("Error creating user:", err);
       res.status(500).json({ error: "Internal server error", errMsg: err }); // Return an error response
     });
 });
