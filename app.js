@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 8081;
+
 require('dotenv').config();
 
 // Routes
@@ -52,3 +53,5 @@ app.get("/dbconnection", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running at port ${port}`);
 });
+
+module.exports = app
