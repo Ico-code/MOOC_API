@@ -11,7 +11,6 @@ async function validateModuleData(moduleData) {
   if (!moduleData || typeof moduleData !== "object") {
     throw { error: `Invalid data for module` };
   }
-
   // Validate module data against Mongoose schema
   const validationError = await new Module(moduleData).validateSync();
   if (validationError) {
@@ -23,20 +22,16 @@ async function validateModuleData(moduleData) {
 router.get("/:moduleId", async (req, res) => {
   try {
     const moduleId = req.params.moduleId;
-
     // Validate module ID
     if (!mongoose.Types.ObjectId.isValid(moduleId)) {
       return res.status(400).json({ error: "Invalid module ID" });
     }
-
     // Find the module by its _id
     const foundModule = await Module.findById(moduleId).lean();
-
     if (!foundModule) {
       console.log("Module not found.");
       return res.status(404).json({ error: "Module not found" });
     }
-
     console.log("Found module:", foundModule);
     res.status(200).json(foundModule); // Respond with the found module
   } catch (err) {
@@ -49,7 +44,6 @@ router.get("/", async (req, res) => {
   try {
     // Fetch all modules
     const modules = await Module.find().lean();
-
     res.status(200).json(modules); // Respond with all modules
   } catch (err) {
     console.error("Error fetching modules:", err);
@@ -60,7 +54,6 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const successfulModules = [];
-
     const moduleData = req.body;
     for (const item of moduleData) {
       const { title, totalScore, duration, order, material, courseId } = item;
@@ -79,24 +72,30 @@ router.post("/", async (req, res) => {
       // Check if the course exists
       const courseExists = await Course.exists({ _id: courseId });
       if (!courseExists) {
-        return res.status(404).json({ error: "Course not found", successfulModules: successfulModules });
+        return res.status(404).json({
+          error: "Course not found",
+          successfulModules: successfulModules,
+        });
       }
       // Validate material array
       for (let index = 0; index < material.length; index++) {
         const content = material[index];
         if (!content.content_type || !content.content) {
-          return res
-            .status(400)
-            .json({ error: `Invalid material content at index ${index}`, successfulModules: successfulModules });
+          return res.status(400).json({
+            error: `Invalid material content at index ${index}`,
+            successfulModules: successfulModules,
+          });
         }
         if (typeof content.content_type !== "string") {
           return res.status(400).json({
-            error: `Invalid data type for material content_type at index ${index}`, successfulModules: successfulModules,
+            error: `Invalid data type for material content_type at index ${index}`,
+            successfulModules: successfulModules,
           });
         }
         if (content.score && typeof content.score !== "number") {
           return res.status(400).json({
-            error: `Invalid data type for material score at index ${index}`, successfulModules: successfulModules,
+            error: `Invalid data type for material score at index ${index}`,
+            successfulModules: successfulModules,
           });
         }
       }
@@ -113,33 +112,43 @@ router.post("/", async (req, res) => {
       const savedModule = await newModule.save();
       successfulModules.push(savedModule);
     }
-    res.status(201).json({ success: "Modules created successfully", modules: successfulModules });
+    res.status(201).json({
+      success: "Modules created successfully",
+      modules: successfulModules,
+    });
   } catch (error) {
     console.error("Error creating module:", error);
-    res.status(500).json({ error: "Internal server error", successfulModules: successfulModules });
+    res.status(500).json({
+      error: "Internal server error",
+      successfulModules: successfulModules,
+    });
   }
 });
+
 router.put("/content/:moduleId", async (req, res) => {
   try {
     const moduleId = req.params.moduleId;
     const { material } = req.body;
     // Validate material data
     if (!material || !Array.isArray(material) || material.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "Material array is required and must not be empty", successfulModules: successfulModules });
+      return res.status(400).json({
+        error: "Material array is required and must not be empty",
+        successfulModules: successfulModules,
+      });
     }
     let validationError = null;
     // Validate each material item
     material.forEach((content, index) => {
       if (!content.content_type || !content.content) {
         validationError = {
-          error: `Invalid material content at index ${index}`, successfulModules: successfulModules,
+          error: `Invalid material content at index ${index}`,
+          successfulModules: successfulModules,
         };
       }
       if (typeof content.content_type !== "string") {
         validationError = {
-          error: `Invalid data types for material content at index ${index}`, successfulModules: successfulModules,
+          error: `Invalid data types for material content at index ${index}`,
+          successfulModules: successfulModules,
         };
       }
     });
@@ -154,42 +163,42 @@ router.put("/content/:moduleId", async (req, res) => {
     );
     if (!updatedModule) {
       console.log("Module not found.");
-      return res.status(404).json({ error: "Module not found", successfulModules: successfulModules });
+      return res.status(404).json({
+        error: "Module not found",
+        successfulModules: successfulModules,
+      });
     }
     console.log("Module contents updated:", updatedModule);
     res.status(200).json(updatedModule);
   } catch (error) {
     console.error("Error updating module contents:", error);
-    res.status(500).json({ error: "Internal server error", successfulModules: successfulModules }); // Return an error response
+    res.status(500).json({
+      error: "Internal server error",
+      successfulModules: successfulModules,
+    }); // Return an error response
   }
 });
 
 router.delete("/:moduleId", async (req, res) => {
   const moduleId = req.params.moduleId;
-
   // Validate moduleId
   if (!mongoose.Types.ObjectId.isValid(moduleId)) {
     return res.status(400).json({ error: "Invalid moduleId" });
   }
-
   try {
     // Delete the module
     const deletedModule = await Module.findByIdAndDelete(moduleId);
-
     if (!deletedModule) {
       return res.status(404).json({ error: "Module not found" });
     }
-
     // Delete the module from all progress documents
     const deletedProgress = await Progress.updateMany(
       { "modulesProgress.moduleId": moduleId },
       { $pull: { modulesProgress: { moduleId } } }
     );
-
     console.log(
       `Deleted module from ${deletedProgress.nModified} progress documents`
     );
-
     res.status(200).json({ message: "Module deleted" }); // Respond with success message
   } catch (error) {
     console.error("Error deleting module:", error);

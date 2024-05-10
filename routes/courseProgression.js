@@ -13,18 +13,14 @@ router.get("/:userId/:courseId", async (req, res) => {
   try {
     const userId = req.params.userId;
     const courseId = req.params.courseId;
-
     // Validate userId and courseId
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ error: "Invalid userId" });
     }
-
     if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
       return res.status(400).json({ error: "Invalid courseId" });
     }
-
     const userProgress = await Progress.findOne({ userId, courseId }).lean();
-
     if (userProgress) {
       res.status(200).json(userProgress);
     } else {
@@ -95,7 +91,6 @@ router.put("/:userId/:courseId", async (req, res) => {
   try {
     const { userId, courseId } = req.params;
     const { moduleId, assignmentId, score } = req.body;
-
     // Validate userId and courseId
     if (
       !mongoose.Types.ObjectId.isValid(userId) ||
@@ -103,34 +98,28 @@ router.put("/:userId/:courseId", async (req, res) => {
     ) {
       return res.status(400).json({ error: "Invalid userId or courseId" });
     }
-
     // Validate moduleId
     if (!mongoose.Types.ObjectId.isValid(moduleId)) {
       return res.status(400).json({ error: "Invalid moduleId" });
     }
-
     // Fetch the module document
     const testModule = await Module.findById(moduleId);
-
     // Check if the module exists and if its courseId matches the one provided
     if (!testModule || testModule.courseId.toString() !== courseId) {
       return res.status(400).json({
         error: "Module not found or is not part of the provided courseId",
       });
     }
-
     // Find or create user progress
     let userProgress = await Progress.findOneAndUpdate(
       { userId, courseId },
       { $setOnInsert: { userId, courseId, modulesProgress: [] } },
       { upsert: true, new: true }
     );
-
     // Find or create module
     let moduleIndex = userProgress.modulesProgress.findIndex((m) =>
       m.moduleId.equals(moduleId)
     );
-
     if (moduleIndex === -1) {
       // If module doesn't exist, create it
       userProgress.modulesProgress.push({
@@ -151,7 +140,6 @@ router.put("/:userId/:courseId", async (req, res) => {
       ].assignmentProgress.findIndex((a) =>
         a.assignmentId.equals(assignmentId)
       );
-
       if (assignmentIndex === -1) {
         // If assignment doesn't exist, create it
         userProgress.modulesProgress[moduleIndex].assignmentProgress.push({
@@ -173,7 +161,6 @@ router.put("/:userId/:courseId", async (req, res) => {
         ].completedDate = new Date();
       }
     }
-
     // Save updated user progress
     await userProgress.save();
     res.status(200).json({ message: "User progress updated successfully" });
@@ -191,9 +178,7 @@ router.delete("/progress/:userId/:courseId", async (req, res) => {
   ) {
     return res.status(400).json({ error: "Invalid userId or courseId" });
   }
-
   const { userId, courseId } = req.params;
-
   try {
     // Delete the course's progression for the specified user
     const deletedProgress = await Progress.deleteMany({ userId, courseId });

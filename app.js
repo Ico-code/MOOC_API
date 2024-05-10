@@ -14,6 +14,7 @@ const mongoose = require('mongoose');
 const uri = process.env.connectionKey;
 
 mongoose.connect(uri);
+// mongoose.connect("mongodb://localhost:27017/");
 
 // Check connection
 mongoose.connection.on('connected', () => {
